@@ -1,4 +1,6 @@
 import React from 'react';
+import { Button, Card, Typography, Image, Space } from 'antd';
+import { PrinterOutlined } from '@ant-design/icons';
 
 function QRCodeDisplay({ qrCodeDataUrl, pdfUrl, handlePrintQrCode }) {
   if (!qrCodeDataUrl) {
@@ -6,21 +8,17 @@ function QRCodeDisplay({ qrCodeDataUrl, pdfUrl, handlePrintQrCode }) {
   }
 
   return (
-    <div id="printable-area">
-      <div className="qr-code-section">
-        <h3>QR Code:</h3>
-        <img src={qrCodeDataUrl} alt="QR Code for PDF" />
-      </div>
-      <div className="pdf-link-section">
-        <h3>PDF Link:</h3>
-        <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-          {pdfUrl}
-        </a>
-      </div>
-      <button id="print-qr-button" className="print-button" onClick={handlePrintQrCode}>
-        Print QR Code & Link
-      </button>
-    </div>
+    <Card title="Scan QR Code or Open PDF" style={{ marginTop: '20px' }}>
+      <Space direction="vertical" align="center" size="middle" style={{ width: '100%' }}>
+        <Image width={200} src={qrCodeDataUrl} alt="QR Code" preview={false} />
+        <Typography.Text>
+          PDF Link: <Typography.Link href={pdfUrl} target="_blank" rel="noopener noreferrer">{pdfUrl}</Typography.Link>
+        </Typography.Text>
+        <Button type="primary" icon={<PrinterOutlined />} onClick={handlePrintQrCode}>
+          Print QR Code & PDF Link
+        </Button>
+      </Space>
+    </Card>
   );
 }
 

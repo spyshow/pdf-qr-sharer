@@ -1,8 +1,12 @@
 import React, { useState } from "react";
-import "./App.css";
+// import "./App.css"; // Removed as per instructions
 import FileUploadForm from "./components/FileUploadForm";
 import QRCodeDisplay from "./components/QRCodeDisplay";
 import ErrorMessage from "./components/ErrorMessage";
+import { Layout, Typography, Row, Col } from 'antd';
+
+const { Header, Content } = Layout;
+const { Title } = Typography;
 
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -14,6 +18,10 @@ function App() {
   const [tags, setTags] = useState("");
 
   const handleFileChange = (event) => {
+    // For Antd Upload, event itself is the file list.
+    // For standard input, it's event.target.files.
+    // The FileUploadForm is now antd, but its onFileChange prop expects { target: { files: [file] } }
+    // This handler in App.jsx is correctly expecting an event-like object from FileUploadForm's onFileChange.
     setSelectedFile(event.target.files[0]);
     setErrorMessage(""); // Clear previous errors
   };
@@ -62,36 +70,19 @@ function App() {
       const data = await response.json();
       setQrCodeDataUrl(data.qrCodeDataUrl);
       setPdfUrl(data.pdfUrl);
-      setSelectedFile(null); // Clear the file input
-      setFileName(""); // Clear the fileName input
-      setTags(""); // Clear the tags input
-      // Clear the actual file input element by resetting its value if possible, or tell user
-      // This is tricky as file input is largely uncontrolled for security reasons
-      // For now, clearing selectedFile state is the main part.
-      if (document.querySelector('input[type="file"]')) {
-        document.querySelector('input[type="file"]').value = "";
-      }
+      setSelectedFile(null); 
+      setFileName(""); 
+      setTags(""); 
+      // The Antd Upload component's file list is controlled by its fileList prop.
+      // Resetting selectedFile to null will clear it.
     } catch (error) {
       setErrorMessage(error.message || "An unexpected error occurred.");
       setSelectedFile(null); 
       setFileName("");
       setTags("");
-      if (document.querySelector('input[type="file"]')) {
-        document.querySelector('input[type="file"]').value = "";
-      }
       console.error("Upload error:", error);
     } finally {
       setUploading(false);
-      // Resetting file, filename and tags if they were not reset due to an error before catch.
-      // However, this might clear user input if upload is retried without re-selecting file.
-      // For this subtask, let's ensure they are cleared if an error occurred and not cleared in success.
-      // The current placement in try/catch should handle it.
-      // If selectedFile is still present, it means upload failed before success or explicit error handling
-      // if (selectedFile) { 
-      //    setSelectedFile(null);
-      //    setFileName("");
-      //    setTags("");
-      // }
     }
   };
 
@@ -100,29 +91,37 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>PDF QR Code Sharer</h1>
-      </header>
-      <main>
-        <ErrorMessage errorMessage={errorMessage} />
-        <FileUploadForm
-          onFileChange={handleFileChange}
-          handleUpload={handleUpload}
-          selectedFile={selectedFile}
-          uploading={uploading}
-          fileName={fileName}
-          onFileNameChange={handleFileNameChange}
-          tags={tags}
-          onTagsChange={handleTagsChange}
-        />
-        <QRCodeDisplay
-          qrCodeDataUrl={qrCodeDataUrl}
-          pdfUrl={pdfUrl}
-          handlePrintQrCode={handlePrintQrCode}
-        />
-      </main>
-    </div>
+    <Layout className="layout">
+      <Header>
+        <Title level={2} style={{ color: 'white', lineHeight: '64px', margin: 0, textAlign: 'center' }}>
+          PDF QR Code Sharer
+        </Title>
+      </Header>
+      <Content style={{ padding: '20px 50px', minHeight: 'calc(100vh - 64px)' }}>
+        <Row justify="center">
+          <Col xs={24} sm={20} md={16} lg={12} xl={10}>
+            <div style={{ background: '#fff', padding: 24, borderRadius: '8px', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' }}>
+              <ErrorMessage errorMessage={errorMessage} />
+              <FileUploadForm
+                onFileChange={handleFileChange}
+                handleUpload={handleUpload}
+                selectedFile={selectedFile}
+                uploading={uploading}
+                fileName={fileName}
+                onFileNameChange={handleFileNameChange}
+                tags={tags}
+                onTagsChange={handleTagsChange}
+              />
+              <QRCodeDisplay
+                qrCodeDataUrl={qrCodeDataUrl}
+                pdfUrl={pdfUrl}
+                handlePrintQrCode={handlePrintQrCode}
+              />
+            </div>
+          </Col>
+        </Row>
+      </Content>
+    </Layout>
   );
 }
 
