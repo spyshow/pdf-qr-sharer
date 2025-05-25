@@ -1,0 +1,166 @@
+body {
+  font-family: sans-serif;
+  margin: 0;
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+.App {
+  text-align: center;
+  padding: 20px;
+}
+
+.App-header {
+  background-color: #282c34;
+  padding: 20px;
+  color: white;
+  margin-bottom: 30px;
+}
+
+.App-header h1 {
+  margin: 0;
+  font-size: 2em;
+}
+
+.upload-section {
+  margin-bottom: 20px;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.upload-section input[type="file"] {
+  margin-right: 10px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.upload-section button {
+  padding: 10px 20px;
+  font-size: 1em;
+  color: white;
+  background-color: #007bff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.upload-section button:hover {
+  background-color: #0056b3;
+}
+
+.upload-section button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.error-message {
+  margin: 20px 0;
+  padding: 10px;
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+}
+
+.qr-code-section,
+.pdf-link-section {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.qr-code-section h3, /* Updated from h2 to h3 */
+.pdf-link-section h3 { /* Updated from h2 to h3 */
+  margin-top: 0;
+  color: #333;
+}
+
+.qr-code-section img {
+  margin-top: 10px;
+  max-width: 100%; /* Responsive for screen */
+  height: auto;
+  border: 1px solid #ddd;
+  padding: 5px;
+  border-radius: 4px;
+}
+
+.pdf-link-section a {
+  color: #007bff;
+  text-decoration: none;
+  word-break: break-all; /* Ensure long URLs wrap */
+}
+
+.pdf-link-section a:hover {
+  text-decoration: underline;
+}
+
+.print-button {
+  margin-top: 15px;
+  padding: 10px 20px;
+  font-size: 1em;
+  color: white;
+  background-color: #17a2b8; /* A different color for distinction */
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.print-button:hover {
+  background-color: #138496;
+}
+
+/* Print Specific Styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #printable-area, #printable-area * {
+    visibility: visible;
+  }
+
+  #printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 20px; /* Add some padding for print */
+    margin: 0;
+    box-shadow: none; /* Remove screen shadow for print */
+    background-color: #fff; /* Ensure background is white */
+  }
+
+  #printable-area .qr-code-section img {
+    max-width: 80mm; /* Adjust size for printing */
+    display: block;
+    margin: 20px auto; /* Center the QR code */
+    border: 1px solid #000; /* Simple border for print */
+  }
+  
+  #printable-area .pdf-link-section a {
+    color: #000 !important; /* Ensure links are black for print */
+    text-decoration: none !important; /* No underline for cleaner print */
+  }
+  
+  #printable-area h3 { /* Updated from h2 to h3 */
+    font-size: 14pt; /* Adjust heading size for print */
+    text-align: center;
+  }
+
+  /* Hide elements not meant for printing */
+  .App-header, 
+  .upload-section, 
+  .error-message, 
+  #print-qr-button, /* Hide the print button itself */
+  .print-button /* Also hide by class if used elsewhere */
+  {
+    display: none !important; /* Use important to ensure override */
+  }
+}
