@@ -24,7 +24,30 @@ const storage = multer.diskStorage({
     cb(null, uploadsDir);
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname); // Keep original file name
+    let customName = req.body.fileName;
+    let sanitizedName = "";
+
+    if (customName) {
+      // Remove extension from customName before sanitizing, if present
+      const originalExt = path.extname(customName); // e.g. .pdf
+      const nameWithoutExt = originalExt ? customName.substring(0, customName.length - originalExt.length) : customName;
+      sanitizedName = nameWithoutExt.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, ''); // Allow hyphens and underscores
+    }
+
+    // Fallback to original filename if customName is empty or results in empty sanitizedName
+    if (!sanitizedName) {
+      const originalNameWithoutExt = path.basename(file.originalname, path.extname(file.originalname));
+      sanitizedName = originalNameWithoutExt.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '');
+    }
+    
+    // Ultimate fallback if somehow still empty (e.g. originalname was only invalid chars)
+    if (!sanitizedName) {
+      sanitizedName = `upload_${Date.now()}`;
+    }
+
+    // Ensure extension is present
+    const fileExt = path.extname(file.originalname) || '.pdf'; // Default to .pdf if original has no extension
+    cb(null, sanitizedName + fileExt);
   },
 });
 
@@ -37,15 +60,18 @@ app.post("/upload", upload.single("pdfFile"), async (req, res) => {
   }
 
   try {
-    const serverIp = ip.address();
-    // Ensure req.file.originalname is properly encoded for URL
-    const encodedFilename = encodeURIComponent(req.file.originalname);
+    const tags = req.body.tags || "";
+    // const serverIp = ip.address(); // serverIp is not used in pdfUrl construction directly for now
+    // req.file.filename is the name set by multer's filename function
+    const encodedFilename = encodeURIComponent(req.file.filename); 
     const pdfUrl = `http://192.168.0.48:${PORT}/pdfs/${encodedFilename}`;
     const qrCodeDataUrl = await qrcode.toDataURL(pdfUrl);
 
     res.json({
       message: "File uploaded successfully",
-      filename: req.file.originalname,
+      filename: req.file.filename, // This is the (potentially customized and sanitized) name
+      originalName: req.file.originalname, // Original name for reference
+      tags: tags,
       pdfUrl: pdfUrl,
       qrCodeDataUrl: qrCodeDataUrl,
     });
