@@ -1,14 +1,17 @@
 import React from 'react';
+import { Alert } from 'antd';
 
 function ErrorMessage({ errorMessage }) {
   if (!errorMessage) {
     return null;
   }
-
   return (
-    <div className="error-message">
-      <p>Error: {errorMessage}</p>
-    </div>
+    <Alert
+      message={errorMessage}
+      type="error"
+      showIcon
+      style={{ marginBottom: '16px' }} // Optional styling
+    />
   );
 }
 
