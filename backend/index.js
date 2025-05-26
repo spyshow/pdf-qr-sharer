@@ -5,6 +5,7 @@ const fs = require("fs");
 const qrcode = require("qrcode");
 const ip = require("ip");
 const cors = require("cors"); // Require CORS
+const db = require('./database'); // Import db from database.js
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -13,6 +14,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors()); // Add CORS middleware
 
 // Ensure uploads directory exists
+// db connection is already initialized and tables created when database.js is imported.
 const uploadsDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
@@ -59,26 +61,80 @@ app.post("/upload", upload.single("pdfFile"), async (req, res) => {
     return res.status(400).json({ message: "No file uploaded." });
   }
 
+  // finalFileName is the name set by multer's filename function
+  const finalFileName = req.file.filename;
+  const original_name = req.file.originalname;
+  const custom_name = req.body.fileName || null; // Use null if not provided
+  const saved_filename = finalFileName;
+  
+  // Construct file_url
+  const encodedFinalFileName = encodeURIComponent(finalFileName);
+  const file_url = `${req.protocol}://${req.get('host')}/pdfs/${encodedFinalFileName}`;
+
+  // Process tags
+  const tagsString = req.body.tags || "";
+  const processedTags = tagsString.split(',')
+                                .map(tag => tag.trim())
+                                .filter(tag => tag !== "");
+
   try {
-    const tags = req.body.tags || "";
-    // const serverIp = ip.address(); // serverIp is not used in pdfUrl construction directly for now
-    // req.file.filename is the name set by multer's filename function
-    const encodedFilename = encodeURIComponent(req.file.filename); 
-    const pdfUrl = `http://192.168.0.48:${PORT}/pdfs/${encodedFilename}`;
-    const qrCodeDataUrl = await qrcode.toDataURL(pdfUrl);
+    // Database operations within a transaction
+    const transaction = db.transaction(() => {
+      // Insert into files table
+      const fileStmt = db.prepare(`
+        INSERT INTO files (original_name, custom_name, saved_filename, file_url) 
+        VALUES (?, ?, ?, ?)
+      `);
+      const fileInsertResult = fileStmt.run(original_name, custom_name, saved_filename, file_url);
+      const file_id = fileInsertResult.lastInsertRowid;
+
+      if (!file_id) {
+        throw new Error("Failed to insert file record into database.");
+      }
+
+      // Process tags
+      const upsertTagStmt = db.prepare(`
+        INSERT INTO tags (name) VALUES (?) ON CONFLICT(name) DO NOTHING
+      `);
+      const selectTagStmt = db.prepare(`
+        SELECT id FROM tags WHERE name = ?
+      `);
+      const insertFileTagStmt = db.prepare(`
+        INSERT INTO file_tags (file_id, tag_id) VALUES (?, ?)
+      `);
+
+      for (const tagName of processedTags) {
+        upsertTagStmt.run(tagName); // Attempt to insert, does nothing if conflict
+        const tag = selectTagStmt.get(tagName); // Get the ID, whether existing or newly inserted
+        if (tag && tag.id) {
+          insertFileTagStmt.run(file_id, tag.id);
+        } else {
+          // This case should ideally not happen if upsert and select are correct
+          console.error(`Failed to find or create tag: ${tagName}`);
+          // Optionally throw an error or handle as per application requirements
+        }
+      }
+      return { file_id }; // Return relevant data from transaction if needed
+    });
+
+    const dbResult = transaction(); // Execute the transaction
+
+    // Generate QR code
+    const qrCodeDataUrl = await qrcode.toDataURL(file_url);
 
     res.json({
-      message: "File uploaded successfully",
-      filename: req.file.filename, // This is the (potentially customized and sanitized) name
-      originalName: req.file.originalname, // Original name for reference
-      tags: tags,
-      pdfUrl: pdfUrl,
+      message: "File uploaded and processed successfully",
+      filename: finalFileName,
+      originalName: original_name,
+      tags: tagsString, // Return the original tags string as per previous behavior
+      pdfUrl: file_url,
       qrCodeDataUrl: qrCodeDataUrl,
     });
+
   } catch (error) {
-    console.error("Error generating QR code or processing file:", error);
+    console.error("Error during file upload processing or database operation:", error);
     res.status(500).json({
-      message: "Error processing file or generating QR code",
+      message: "Error processing file or database operation",
       error: error.message,
     });
   }
