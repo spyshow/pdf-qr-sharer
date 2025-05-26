@@ -19,7 +19,6 @@ const customTagRender = (tagProps) => {
 
 function FileUploadForm(props) {
   const [allDbTags, setAllDbTags] = useState([]);
-  const [selectedTagValues, setSelectedTagValues] = useState([]); // Renamed from selectedTagsForFile
 
   // Destructure props for easier use
   const {
@@ -37,6 +36,7 @@ function FileUploadForm(props) {
   useEffect(() => {
     const fetchTags = async () => {
       try {
+        // Ensure this URL is configurable or correctly set for your environment
         const response = await fetch('http://192.168.0.48:3001/api/tags');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -50,24 +50,14 @@ function FileUploadForm(props) {
     fetchTags();
   }, []);
 
-  // Effect to initialize selectedTagValues from props.tags (e.g., when form is cleared/reloaded)
-  useEffect(() => {
-    setSelectedTagValues(tags ? tags.split(',').map(t => t.trim()).filter(t => t) : []);
-  }, [tags]);
+  const handleSelectTagsChange = (selectedOptionsArray) => {
+    // selectedOptionsArray is an array of strings, e.g., ["tag1", "tag2"]
+    const processedTags = selectedOptionsArray.map(tag => tag.trim()).filter(tag => tag);
+    const newTagsString = processedTags.join(',');
 
-  // Effect to update props.onTagsChange when selectedTagValues changes
-  useEffect(() => {
-    const newTagsString = selectedTagValues.join(',');
-    // props.tags is the current comma-separated string from App.jsx
-    if (newTagsString !== props.tags) {
-      props.onTagsChange({ target: { value: newTagsString } });
+    if (newTagsString !== tags) { // Compare with current props.tags
+      onTagsChange({ target: { value: newTagsString } });
     }
-  }, [selectedTagValues, props.tags, props.onTagsChange]); // Add props.tags to dependency array
-  
-  const handleTagChange = (newSelectedValues) => {
-    // Filter out any empty strings that might be introduced if user creates an empty tag
-    const validTags = newSelectedValues.map(tag => tag.trim()).filter(tag => tag);
-    setSelectedTagValues(validTags);
   };
 
   // Handler for antd Upload component's onChange event
@@ -135,8 +125,9 @@ function FileUploadForm(props) {
           mode="tags"
           style={{ width: '100%' }}
           placeholder="Type or select tags"
-          value={selectedTagValues}
-          onChange={handleTagChange}
+          // Derive value directly from props.tags string
+          value={tags ? tags.split(',').map(t => t.trim()).filter(t => t) : []}
+          onChange={handleSelectTagsChange} // Use the new handler
           options={allDbTags.map(tag => ({ label: tag, value: tag }))}
           disabled={uploading}
           tagRender={customTagRender}

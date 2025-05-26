@@ -82,37 +82,22 @@ app.post("/upload", upload.single("pdfFile"), async (req, res) => {
                                 .map(tag => tag.trim())
                                 .filter(tag => tag !== "");
 
-  // Pre-check for existing file_url
-  try {
-    const checkUrlStmt = db.prepare('SELECT id FROM files WHERE file_url = ?');
-    const existingFile = checkUrlStmt.get(file_url);
+  let conflictFound = false;
+  let successfulFileId = null;
+  let transactionErrorOccurred = false;
+  let transactionErrorMessage = "";
 
-    if (existingFile) {
-      // File URL already exists, delete the uploaded file and return 409
-      fs.unlink(req.file.path, (err) => {
-        if (err) {
-          // Log this error, but still inform the client about the conflict
-          console.error("Error deleting conflicting uploaded file:", err);
-        }
-      });
-      return res.status(409).json({ message: "A file resulting in this URL already exists. Please use a different name or upload a different file." });
-    }
-    // If no existing file, proceed to the transaction (current try...catch block for DB operations)
-  } catch (dbCheckError) {
-    // Error during the pre-check itself
-    console.error("Error during file URL pre-check:", dbCheckError);
-    // Also delete the uploaded file if the pre-check failed catastrophically before conflict assessment
-    fs.unlink(req.file.path, (unlinkErr) => {
-      if (unlinkErr) console.error("Error deleting file after DB pre-check failure:", unlinkErr);
-    });
-    return res.status(500).json({ message: "Error checking for existing file URL.", error: dbCheckError.message });
-  }
-
-  // Main database operations (inserting file and tags)
   try {
-    // Database operations within a transaction
-    const transaction = db.transaction(() => {
-      // Insert into files table
+    const result = db.transaction(() => {
+      // 1. Check for existing file_url WITHIN the transaction
+      const checkUrlStmt = db.prepare('SELECT id FROM files WHERE file_url = ?');
+      const existingFile = checkUrlStmt.get(file_url);
+
+      if (existingFile) {
+        return { conflict: true, fileId: null, error: null }; // Signal conflict
+      }
+
+      // 2. Insert into files table (if no conflict)
       const fileStmt = db.prepare(`
         INSERT INTO files (original_name, custom_name, saved_filename, file_url) 
         VALUES (?, ?, ?, ?)
@@ -121,10 +106,12 @@ app.post("/upload", upload.single("pdfFile"), async (req, res) => {
       const file_id = fileInsertResult.lastInsertRowid;
 
       if (!file_id) {
-        throw new Error("Failed to insert file record into database.");
+        // This specific error within the transaction might be hard to trigger if other constraints are met
+        // but good to have as a safeguard.
+        throw new Error("Failed to insert file record into database, no lastInsertRowid returned.");
       }
 
-      // Process tags
+      // 3. Process tags
       const upsertTagStmt = db.prepare(`
         INSERT INTO tags (name) VALUES (?) ON CONFLICT(name) DO NOTHING
       `);
@@ -136,39 +123,97 @@ app.post("/upload", upload.single("pdfFile"), async (req, res) => {
       `);
 
       for (const tagName of processedTags) {
-        upsertTagStmt.run(tagName); // Attempt to insert, does nothing if conflict
-        const tag = selectTagStmt.get(tagName); // Get the ID, whether existing or newly inserted
+        upsertTagStmt.run(tagName);
+        const tag = selectTagStmt.get(tagName);
         if (tag && tag.id) {
           insertFileTagStmt.run(file_id, tag.id);
         } else {
-          // This case should ideally not happen if upsert and select are correct
-          console.error(`Failed to find or create tag: ${tagName}`);
-          // Optionally throw an error or handle as per application requirements
+          // This indicates a problem with tag creation or retrieval logic
+          console.error(`Failed to find or create tag: ${tagName} for file_id: ${file_id}`);
+          // Depending on strictness, might want to throw an error here to rollback the transaction
+          // For now, logging it. If this needs to be stricter, an error should be thrown.
         }
       }
-      return { file_id }; // Return relevant data from transaction if needed
-    });
+      return { conflict: false, fileId: file_id, error: null }; // Signal success
+    })(); // Execute the transaction
 
-    const dbResult = transaction(); // Execute the transaction
+    if (result.conflict) {
+      conflictFound = true;
+    } else if (result.fileId) {
+      successfulFileId = result.fileId;
+    } else {
+      // This case implies the transaction returned something unexpected (e.g. no fileId and no conflict flag)
+      // It might be an error thrown and caught by the outer catch, or an issue with transaction return logic.
+      // The outer catch block will handle actual thrown errors.
+      console.error("Transaction resulted in an unexpected state (no conflict, no fileId).");
+      // We will rely on the outer catch for actual errors; if it was not an error, this is a logic flaw.
+      // To be safe, treat as an error for file cleanup.
+      transactionErrorOccurred = true;
+      transactionErrorMessage = "Transaction completed without error, but no successful file ID and no conflict.";
+    }
 
-    // Generate QR code
-    const qrCodeDataUrl = await qrcode.toDataURL(file_url);
+  } catch (transactionError) {
+    console.error("Error during database transaction:", transactionError);
+    transactionErrorOccurred = true;
+    transactionErrorMessage = transactionError.message;
+  }
 
-    res.json({
-      message: "File uploaded and processed successfully",
-      filename: finalFileName,
-      originalName: original_name,
-      tags: tagsString, // Return the original tags string as per previous behavior
-      pdfUrl: file_url,
-      qrCodeDataUrl: qrCodeDataUrl,
-    });
+  // Handle outcome
+  if (conflictFound) {
+    if (req.file && req.file.path) {
+      fs.unlink(req.file.path, (err) => {
+        if (err) {
+          console.error("Error deleting conflicting uploaded file:", err);
+        }
+      });
+    }
+    return res.status(409).json({ message: "A file resulting in this URL already exists. Please use a different name or upload a different file." });
+  }
 
-  } catch (error) {
-    console.error("Error during file upload processing or database operation:", error);
-    res.status(500).json({
-      message: "Error processing file or database operation",
-      error: error.message,
-    });
+  if (transactionErrorOccurred) {
+    if (req.file && req.file.path) {
+      fs.unlink(req.file.path, (unlinkErr) => {
+        if (unlinkErr) console.error("Error deleting file after transaction failure:", unlinkErr);
+      });
+    }
+    return res.status(500).json({ message: "Database operation failed.", error: transactionErrorMessage });
+  }
+
+  if (successfulFileId) {
+    try {
+      // Generate QR code
+      const qrCodeDataUrl = await qrcode.toDataURL(file_url);
+
+      res.json({
+        message: "File uploaded and processed successfully",
+        filename: finalFileName,
+        originalName: original_name,
+        tags: tagsString,
+        pdfUrl: file_url,
+        qrCodeDataUrl: qrCodeDataUrl,
+      });
+    } catch (qrError) {
+      console.error("Error generating QR code:", qrError);
+      // Note: File is already saved in DB. This is an error in a subsequent step.
+      // Depending on requirements, you might want to leave the file as is,
+      // or attempt to "roll back" by deleting the DB entry and file (which is more complex).
+      // For now, returning a 500 but acknowledging the file was saved.
+      res.status(500).json({ 
+        message: "File uploaded but QR code generation failed.", 
+        error: qrError.message,
+        file_id: successfulFileId, // Optionally return file_id
+        pdfUrl: file_url
+      });
+    }
+  } else {
+    // Fallback for any unhandled scenarios. This should ideally not be reached if logic above is correct.
+    console.error("File processing resulted in an unknown state.");
+    if (req.file && req.file.path) {
+      fs.unlink(req.file.path, (unlinkErr) => {
+        if (unlinkErr) console.error("Error deleting file in unexpected outcome scenario:", unlinkErr);
+      });
+    }
+    return res.status(500).json({ message: "An unexpected error occurred during file processing." });
   }
 });
 
