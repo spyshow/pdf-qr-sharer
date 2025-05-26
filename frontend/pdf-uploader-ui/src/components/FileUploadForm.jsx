@@ -1,8 +1,13 @@
-import React from 'react';
-import { Upload, Input, Button, Form, Select } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Upload, Input, Button, Form, AutoComplete, Tag, Space } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 
 function FileUploadForm(props) {
+  const [allDbTags, setAllDbTags] = useState([]);
+  const [currentTagInputValue, setCurrentTagInputValue] = useState('');
+  const [selectedTagsForFile, setSelectedTagsForFile] = useState([]);
+  const [autoCompleteOptions, setAutoCompleteOptions] = useState([]);
+
   // Destructure props for easier use
   const {
     onFileChange,
@@ -11,9 +16,75 @@ function FileUploadForm(props) {
     uploading,
     fileName,
     onFileNameChange,
-    tags,
-    onTagsChange
+    tags, // This is the comma-separated string from App.jsx
+    onTagsChange // This expects an event-like object with { target: { value: "comma,separated,tags" } }
   } = props;
+
+  // Effect to fetch all existing tags from DB for AutoComplete
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        const response = await fetch('http://192.168.0.48:3001/api/tags');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const fetchedTags = await response.json();
+        setAllDbTags(fetchedTags); // Store all tags from DB
+      } catch (error) {
+        console.error("Failed to fetch tags:", error);
+      }
+    };
+    fetchTags();
+  }, []);
+
+  // Effect to initialize selectedTagsForFile from props.tags (e.g., when form is cleared/reloaded)
+  useEffect(() => {
+    setSelectedTagsForFile(tags ? tags.split(',').map(t => t.trim()).filter(t => t) : []);
+  }, [tags]);
+
+  // Effect to update props.onTagsChange when selectedTagsForFile changes
+  useEffect(() => {
+    onTagsChange({ target: { value: selectedTagsForFile.join(',') } });
+  }, [selectedTagsForFile, onTagsChange]);
+  
+  // Effect to update AutoComplete options based on currentTagInputValue and allDbTags
+  useEffect(() => {
+    if (currentTagInputValue) {
+      const filtered = allDbTags
+        .filter(tag => tag.toLowerCase().includes(currentTagInputValue.toLowerCase()))
+        .filter(tag => !selectedTagsForFile.includes(tag)); // Don't suggest already selected tags
+      setAutoCompleteOptions(filtered.map(tag => ({ value: tag })));
+    } else {
+      setAutoCompleteOptions([]);
+    }
+  }, [currentTagInputValue, allDbTags, selectedTagsForFile]);
+
+
+  const handleAddTag = (tagValue) => {
+    const trimmedValue = tagValue.trim();
+    if (trimmedValue && !selectedTagsForFile.includes(trimmedValue)) {
+      setSelectedTagsForFile([...selectedTagsForFile, trimmedValue]);
+    }
+    setCurrentTagInputValue(''); // Clear input field
+    setAutoCompleteOptions([]); // Clear suggestions
+  };
+
+  const handleRemoveTag = (tagToRemove) => {
+    setSelectedTagsForFile(selectedTagsForFile.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleInputChange = (value) => {
+    // For AutoComplete, `value` is the string. For Input, it's `e.target.value`.
+    // AutoComplete's onChange provides the value directly.
+    setCurrentTagInputValue(typeof value === 'string' ? value : value.target.value);
+  };
+  
+  const handleInputKeyDown = (e) => {
+    if (e.key === 'Enter' && currentTagInputValue) {
+      e.preventDefault();
+      handleAddTag(currentTagInputValue);
+    }
+  };
 
   // Handler for antd Upload component's onChange event
   // This is to ensure we clear the file list visually if the user removes the file
@@ -76,19 +147,39 @@ function FileUploadForm(props) {
       </Form.Item>
 
       <Form.Item label="Tags">
-        <Select
-          mode="tags"
-          style={{ width: '100%' }}
-          placeholder="Enter or select tags"
-          value={tags ? tags.split(',').filter(tag => tag.trim() !== '') : []}
-          onChange={(value) => {
-            // onTagsChange expects an event-like object with { target: { value: string } }
-            // The Select component in "tags" mode provides an array of strings.
-            onTagsChange({ target: { value: value.join(',') } });
-          }}
-          disabled={uploading}
-          tokenSeparators={[',']}
-        />
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <AutoComplete
+            options={autoCompleteOptions}
+            style={{ width: '100%' }}
+            onSelect={handleAddTag} // value from option is passed directly
+            value={currentTagInputValue} // Controlled by the same state as Input
+            onChange={handleInputChange} // Handles text changes in AutoComplete's input
+            disabled={uploading}
+            onKeyDown={handleInputKeyDown} // Allow Enter from AutoComplete's input too
+            placeholder="Type or select a tag"
+          >
+            {/* We can use a custom Input component if more control is needed, 
+                but AutoComplete by default renders an Input. 
+                If using a separate Input and AutoComplete, ensure their states are managed.
+                For simplicity, this setup uses AutoComplete's built-in input,
+                and `handleInputChange` + `handleInputKeyDown` are bound to it.
+            */}
+          </AutoComplete>
+          
+          <div style={{ marginTop: 8 }}>
+            {selectedTagsForFile.map((tag) => (
+              <Tag
+                closable
+                key={tag}
+                onClose={() => handleRemoveTag(tag)}
+                style={{ marginBottom: 4 }}
+                disabled={uploading}
+              >
+                {tag}
+              </Tag>
+            ))}
+          </div>
+        </Space>
       </Form.Item>
 
       <Form.Item>
