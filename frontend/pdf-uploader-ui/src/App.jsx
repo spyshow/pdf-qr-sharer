@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 // import "./App.css"; // Removed as per instructions
 import FileUploadForm from "./components/FileUploadForm";
 import QRCodeDisplay from "./components/QRCodeDisplay";
@@ -17,24 +17,24 @@ function App() {
   const [fileName, setFileName] = useState("");
   const [tags, setTags] = useState("");
 
-  const handleFileChange = (event) => {
+  const handleFileChange = useCallback((event) => {
     // For Antd Upload, event itself is the file list.
     // For standard input, it's event.target.files.
     // The FileUploadForm is now antd, but its onFileChange prop expects { target: { files: [file] } }
     // This handler in App.jsx is correctly expecting an event-like object from FileUploadForm's onFileChange.
     setSelectedFile(event.target.files[0]);
     setErrorMessage(""); // Clear previous errors
-  };
+  }, []); // setSelectedFile and setErrorMessage are stable
 
-  const handleFileNameChange = (event) => {
+  const handleFileNameChange = useCallback((event) => {
     setFileName(event.target.value);
-  };
+  }, []); // setFileName is stable
 
-  const handleTagsChange = (event) => {
+  const handleTagsChange = useCallback((event) => {
     setTags(event.target.value);
-  };
+  }, []); // setTags is stable
 
-  const handleUpload = async () => {
+  const handleUpload = useCallback(async () => {
     if (!selectedFile) {
       setErrorMessage("Please select a PDF file first.");
       return;
@@ -84,11 +84,11 @@ function App() {
     } finally {
       setUploading(false);
     }
-  };
+  }, [selectedFile, fileName, tags]); // State setters are stable and not needed here
 
-  const handlePrintQrCode = () => {
+  const handlePrintQrCode = useCallback(() => {
     window.print();
-  };
+  }, []); // No dependencies
 
   return (
     <Layout className="layout">
