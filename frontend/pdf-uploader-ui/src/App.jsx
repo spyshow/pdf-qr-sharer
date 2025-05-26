@@ -56,6 +56,16 @@ function App() {
         body: formData,
       });
 
+      // Specific handling for 409 Conflict
+      if (response.status === 409) {
+        const errorData = await response.json();
+        setErrorMessage(errorData.message || "A file with this name or resulting URL already exists. Please adjust the file name or tags.");
+        setSelectedFile(null); // Clear only the file, so user can adjust name/tags
+        // Do not clear fileName or tags here
+        setUploading(false); // Ensure uploading state is reset before early return
+        return; 
+      }
+
       if (!response.ok) {
         const errorData = await response
           .json()
@@ -67,6 +77,7 @@ function App() {
         );
       }
 
+      // If response is ok (e.g. 200)
       const data = await response.json();
       setQrCodeDataUrl(data.qrCodeDataUrl);
       setPdfUrl(data.pdfUrl);

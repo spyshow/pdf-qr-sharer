@@ -82,6 +82,33 @@ app.post("/upload", upload.single("pdfFile"), async (req, res) => {
                                 .map(tag => tag.trim())
                                 .filter(tag => tag !== "");
 
+  // Pre-check for existing file_url
+  try {
+    const checkUrlStmt = db.prepare('SELECT id FROM files WHERE file_url = ?');
+    const existingFile = checkUrlStmt.get(file_url);
+
+    if (existingFile) {
+      // File URL already exists, delete the uploaded file and return 409
+      fs.unlink(req.file.path, (err) => {
+        if (err) {
+          // Log this error, but still inform the client about the conflict
+          console.error("Error deleting conflicting uploaded file:", err);
+        }
+      });
+      return res.status(409).json({ message: "A file resulting in this URL already exists. Please use a different name or upload a different file." });
+    }
+    // If no existing file, proceed to the transaction (current try...catch block for DB operations)
+  } catch (dbCheckError) {
+    // Error during the pre-check itself
+    console.error("Error during file URL pre-check:", dbCheckError);
+    // Also delete the uploaded file if the pre-check failed catastrophically before conflict assessment
+    fs.unlink(req.file.path, (unlinkErr) => {
+      if (unlinkErr) console.error("Error deleting file after DB pre-check failure:", unlinkErr);
+    });
+    return res.status(500).json({ message: "Error checking for existing file URL.", error: dbCheckError.message });
+  }
+
+  // Main database operations (inserting file and tags)
   try {
     // Database operations within a transaction
     const transaction = db.transaction(() => {
