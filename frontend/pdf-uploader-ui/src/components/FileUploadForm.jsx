@@ -1,5 +1,5 @@
 import React from 'react';
-import { Upload, Input, Button, Form } from 'antd';
+import { Upload, Input, Button, Form, Select } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 
 function FileUploadForm(props) {
@@ -76,11 +76,18 @@ function FileUploadForm(props) {
       </Form.Item>
 
       <Form.Item label="Tags">
-        <Input
-          placeholder="Enter tags (comma-separated)"
-          value={tags}
-          onChange={onTagsChange} // App.jsx already handles event.target.value
+        <Select
+          mode="tags"
+          style={{ width: '100%' }}
+          placeholder="Enter or select tags"
+          value={tags ? tags.split(',').filter(tag => tag.trim() !== '') : []}
+          onChange={(value) => {
+            // onTagsChange expects an event-like object with { target: { value: string } }
+            // The Select component in "tags" mode provides an array of strings.
+            onTagsChange({ target: { value: value.join(',') } });
+          }}
           disabled={uploading}
+          tokenSeparators={[',']}
         />
       </Form.Item>
 
