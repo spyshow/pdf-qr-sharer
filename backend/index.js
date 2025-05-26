@@ -140,6 +140,20 @@ app.post("/upload", upload.single("pdfFile"), async (req, res) => {
   }
 });
 
+// GET route for fetching all tags
+app.get('/api/tags', async (req, res) => {
+  try {
+    const stmt = db.prepare('SELECT name FROM tags ORDER BY name ASC');
+    const tagObjects = stmt.all(); // Returns an array of objects, e.g., [{name: 'tag1'}, {name: 'tag2'}]
+    const tagNames = tagObjects.map(tagObj => tagObj.name); // Extract just the names
+
+    res.json(tagNames);
+  } catch (error) {
+    console.error('Error fetching tags:', error);
+    res.status(500).json({ message: 'Failed to fetch tags', error: error.message });
+  }
+});
+
 // Serve static files from the 'uploads' directory
 // Make sure this is also correctly handling potential special characters in filenames if necessary
 // express.static by default uses 'send' which handles Content-Disposition and ETag, and should be fine.
