@@ -97,9 +97,9 @@ function App() {
           PDF QR Code Sharer
         </Title>
       </Header>
-      <Content style={{ padding: '20px 50px', minHeight: 'calc(100vh - 64px)' }}>
+      <Content style={{ padding: '20px', minHeight: 'calc(100vh - 64px)' }}>
         <Row justify="center">
-          <Col xs={24} sm={20} md={16} lg={12} xl={10}>
+          <Col xs={24} sm={24} md={24} lg={24} xl={24}>
             <div style={{ background: '#fff', padding: 24, borderRadius: '8px', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)' }}>
               <ErrorMessage errorMessage={errorMessage} />
               <FileUploadForm
