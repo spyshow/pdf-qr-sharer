@@ -57,8 +57,12 @@ function FileUploadForm(props) {
 
   // Effect to update props.onTagsChange when selectedTagValues changes
   useEffect(() => {
-    onTagsChange({ target: { value: selectedTagValues.join(',') } });
-  }, [selectedTagValues, onTagsChange]);
+    const newTagsString = selectedTagValues.join(',');
+    // props.tags is the current comma-separated string from App.jsx
+    if (newTagsString !== props.tags) {
+      props.onTagsChange({ target: { value: newTagsString } });
+    }
+  }, [selectedTagValues, props.tags, props.onTagsChange]); // Add props.tags to dependency array
   
   const handleTagChange = (newSelectedValues) => {
     // Filter out any empty strings that might be introduced if user creates an empty tag
