@@ -13,6 +13,11 @@ const PORT = process.env.PORT || 3001;
 // Enable CORS for all routes
 app.use(cors()); // Add CORS middleware
 
+// Root GET endpoint for diagnostic purposes
+app.get('/', (req, res) => {
+  res.send('Backend server is running and responsive!');
+});
+
 // Ensure uploads directory exists
 // db connection is already initialized and tables created when database.js is imported.
 const uploadsDir = path.join(__dirname, "uploads");
