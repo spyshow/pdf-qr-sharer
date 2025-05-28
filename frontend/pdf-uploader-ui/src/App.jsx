@@ -127,6 +127,8 @@ function App() {
                 qrCodeDataUrl={qrCodeDataUrl}
                 pdfUrl={pdfUrl}
                 handlePrintQrCode={handlePrintQrCode}
+                fileName={fileName}
+                tags={tags}
               />
             </div>
           </Col>
