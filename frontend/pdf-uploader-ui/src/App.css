@@ -116,50 +116,32 @@ body {
 }
 
 @media print {
-      /* Hide everything by default */
-      body, body * {
-        display: none !important;
-        visibility: hidden !important; /* Adding for extra measure */
-      }
+  /* Ensure a white background for the printed area if not default */
+  #printable-area {
+    background-color: #fff !important; 
+  }
 
-      /* Make printable-area and its contents visible and styled */
-      #printable-area {
-        display: block !important;
-        visibility: visible !important;
-        position: absolute;
-        left: 0px; /* Corrected unit */
-        top: 0px;  /* Corrected unit */
-        width: 100%;
-        padding: 20px;
-        margin: 0px; /* Corrected unit */
-        background-color: #fff !important;
-        z-index: 9999 !important; /* Ensure it's on top */
-      }
+  #printable-area h1 {
+    text-align: center;
+    font-size: 20pt;
+    color: #000 !important; /* Ensure black text for print */
+    margin-top: 0; /* Or specific print margin */
+    margin-bottom: 10px;
+  }
 
-      #printable-area h1 {
-        display: block !important;
-        visibility: visible !important;
-        text-align: center;
-        font-size: 20pt !important;
-        color: #000 !important;
-        margin-top: 0px; /* Corrected unit */
-        margin-bottom: 10px;
-      }
+  #printable-area h3 {
+    text-align: center;
+    font-size: 14pt;
+    color: #000 !important; /* Ensure black text for print */
+    margin-bottom: 15px;
+  }
 
-      #printable-area h3 {
-        display: block !important;
-        visibility: visible !important;
-        text-align: center;
-        font-size: 14pt !important;
-        color: #000 !important;
-        margin-bottom: 15px;
-      }
-
-      #printable-area img { /* QR Code */
-        display: block !important;
-        visibility: visible !important;
-        max-width: 80mm !important;
-        margin: 20px auto !important;
-        border: 1px solid #000 !important;
-      }
-    }
+  #printable-area img { /* QR Code */
+    max-width: 80mm; /* Or desired print size */
+    display: block;
+    margin: 20px auto;
+    border: 1px solid #000; /* Optional: border for the image */
+  }
+  
+  /* Add any other styles specifically needed for the content of #printable-area when printed */
+}

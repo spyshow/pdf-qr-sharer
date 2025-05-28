@@ -96,9 +96,9 @@ function App() {
     }
   }, [selectedFile, fileName, tags]); // State setters are stable and not needed here
 
-  const handlePrintQrCode = useCallback(() => {
-    window.print();
-  }, []); // No dependencies
+  // const handlePrintQrCode = useCallback(() => {
+  //   window.print();
+  // }, []); // No dependencies - This function is removed
 
   return (
     <Layout className="layout">
@@ -125,7 +125,7 @@ function App() {
               <QRCodeDisplay
                 qrCodeDataUrl={qrCodeDataUrl}
                 pdfUrl={pdfUrl}
-                handlePrintQrCode={handlePrintQrCode}
+                // handlePrintQrCode={handlePrintQrCode} // This prop is removed
                 fileName={fileName}
                 tags={tags}
               />
