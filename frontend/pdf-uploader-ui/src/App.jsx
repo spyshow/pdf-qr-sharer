@@ -82,10 +82,9 @@ function App() {
       setQrCodeDataUrl(data.qrCodeDataUrl);
       setPdfUrl(data.pdfUrl);
       setSelectedFile(null); 
-      setFileName(""); 
-      setTags(""); 
       // The Antd Upload component's file list is controlled by its fileList prop.
       // Resetting selectedFile to null will clear it.
+      //fileName and tags are intentionally not cleared to keep them available for display/print.
     } catch (error) {
       setErrorMessage(error.message || "An unexpected error occurred.");
       setSelectedFile(null); 
