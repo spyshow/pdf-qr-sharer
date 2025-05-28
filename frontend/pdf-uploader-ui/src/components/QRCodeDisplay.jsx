@@ -19,7 +19,7 @@ function QRCodeDisplay({ qrCodeDataUrl, pdfUrl, fileName, tags }) { // Removed h
       <div id="printable-area" ref={printableAreaRef}>
         <h1>{fileName || "Name not available"}</h1>
         <h3>{tags || "Tags not available"}</h3>
-        <Image width={200} src={qrCodeDataUrl} alt="QR Code" preview={false} />
+        {/* <Image width={200} src={qrCodeDataUrl} alt="QR Code" preview={false} /> */} {/* Temporarily commented out/removed */}
       </div>
       <Space direction="vertical" align="center" size="middle" style={{ width: '100%' }}>
         <Typography.Text>
