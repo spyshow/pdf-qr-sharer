@@ -5,12 +5,9 @@ import { PrinterOutlined } from '@ant-design/icons';
 import PrintableContent from './PrintableContent'; // Import the new component
 
 function QRCodeDisplay({ qrCodeDataUrl, pdfUrl, fileName, tags }) {
-  if (!qrCodeDataUrl) {
-    return null;
-  }
-
-  const printableAreaRef = useRef(); // Ref for the PrintableContent component
-  console.log("QRCodeDisplay: printableAreaRef initialized", printableAreaRef); // Log initial ref object
+  // 1. Call ALL hooks at the top level, unconditionally.
+  const printableAreaRef = useRef();
+  console.log("QRCodeDisplay: printableAreaRef initialized", printableAreaRef); 
 
   const handlePrint = useReactToPrint({
     content: () => {
@@ -19,16 +16,18 @@ function QRCodeDisplay({ qrCodeDataUrl, pdfUrl, fileName, tags }) {
     },
     onBeforeGetContent: () => {
       console.log("useReactToPrint onBeforeGetContent() called. printableAreaRef.current:", printableAreaRef.current);
-      return Promise.resolve(); // Required by onBeforeGetContent
+      return Promise.resolve();
     },
     onPrintError: (errorLocation, error) => {
-      // Log the error location and the error object itself
       console.error("useReactToPrint onPrintError:", errorLocation, error);
-      // It might be useful to see the state of printableAreaRef.current here too, if possible,
-      // but the error object itself is more critical.
       console.error("useReactToPrint onPrintError - printableAreaRef.current at time of error:", printableAreaRef.current);
     }
   });
+
+  // 2. The early conditional return `if (!qrCodeDataUrl) { return null; }` has been removed.
+  // App.jsx is expected to handle conditional rendering of QRCodeDisplay.
+  // If QRCodeDisplay is rendered, qrCodeDataUrl should be present.
+  // If not, PrintableContent and the visible Image should handle empty qrCodeDataUrl prop gracefully.
 
   // Log right before the return statement of QRCodeDisplay
   console.log("QRCodeDisplay: printableAreaRef before return statement. Current value:", printableAreaRef.current);
