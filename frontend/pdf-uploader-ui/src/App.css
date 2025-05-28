@@ -146,3 +146,15 @@ body {
   
   /* Add any other styles specifically needed for the content of #actual-printable-content when printed */
 }
+
+.visually-hidden-for-print-ref {
+  position: absolute !important; /* Use !important to ensure override */
+  left: -9999px !important;
+  top: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  border: 0 !important; /* Ensure no border contributes to layout */
+  padding: 0 !important; /* Ensure no padding contributes to layout */
+  margin: 0 !important; /* Ensure no margin contributes to layout */
+}
