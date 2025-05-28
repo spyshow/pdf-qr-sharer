@@ -130,36 +130,62 @@ body {
     left: 0;
     top: 0;
     width: 100%;
-    padding: 20px; /* Add some padding for print */
+    padding: 20px;
     margin: 0;
-    box-shadow: none; /* Remove screen shadow for print */
-    background-color: #fff; /* Ensure background is white */
+    box-shadow: none;
+    background-color: #fff !important; /* Ensure white background for print */
   }
 
-  #printable-area .qr-code-section img {
-    max-width: 80mm; /* Adjust size for printing */
-    display: block;
-    margin: 20px auto; /* Center the QR code */
-    border: 1px solid #000; /* Simple border for print */
-  }
-  
-  #printable-area .pdf-link-section a {
-    color: #000 !important; /* Ensure links are black for print */
-    text-decoration: none !important; /* No underline for cleaner print */
-  }
-  
-  #printable-area h3 { /* Updated from h2 to h3 */
-    font-size: 14pt; /* Adjust heading size for print */
+  /* Styles for elements INSIDE #printable-area */
+  #printable-area h1 { /* File Name */
     text-align: center;
+    font-size: 20pt; /* As per requirement */
+    color: #000 !important;
+    margin-top: 0; /* Remove potential top margin */
+    margin-bottom: 10px; /* Space between h1 and h3 */
   }
 
-  /* Hide elements not meant for printing */
-  .App-header, 
-  .upload-section, 
-  .error-message, 
-  #print-qr-button, /* Hide the print button itself */
-  .print-button /* Also hide by class if used elsewhere */
+  #printable-area h3 { /* Tags */
+    text-align: center;
+    font-size: 14pt; /* As per requirement */
+    color: #000 !important;
+    margin-top: 0; /* Remove potential top margin */
+    margin-bottom: 15px; /* Space between h3 and QR image */
+  }
+
+  #printable-area img { /* QR Code Image */
+    max-width: 80mm; /* As per requirement */
+    display: block;
+    margin: 20px auto; /* Centering with top/bottom margin */
+    border: 1px solid #000 !important; /* As per requirement */
+  }
+
+  /* Explicitly hide elements NOT meant for printing using display: none !important; */
+  /* This complements `visibility: hidden` to ensure elements don't occupy layout space. */
+
+  /* Ant Design layout components from App.jsx */
+  .ant-layout-header,
+  .ant-layout-sider, /* For completeness */
+  .ant-layout-footer, /* For completeness */
+  /* The main white content box in App.jsx that hosts the form and QR code card */
+  /* This selector targets the div: <div style="background: rgb(255, 255, 255); padding: 24px; border-radius: 8px; box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 8px;"> */
+  /* It's crucial to hide this container of FileUploadForm and QRCodeDisplay card */
+  .ant-layout-content > .ant-row > .ant-col > div[style*="background: #fff"],
+
+  /* Elements from QRCodeDisplay.jsx that are OUTSIDE #printable-area */
+  .ant-card-head, /* Hides the card title "Scan QR Code or Open PDF" */
+  /* Targets the Typography.Text containing the PDF link. It's within Space, within Card body. */
+  .ant-card-body > .ant-space > .ant-typography,
+  /* Targets the Button "Print QR Code & PDF Link". It's within Space, within Card body. */
+  .ant-card-body > .ant-space > .ant-btn,
+
+  /* Other general app elements that should be hidden */
+  .App-header, /* Custom header from App.css (if used alongside AntD header) */
+  .upload-section, /* Container for FileUploadForm (should be covered by hiding the white content box) */
+  .error-message, /* Error message display (should be covered by hiding the white content box) */
+  #print-qr-button, /* Legacy button ID, if present */
+  .print-button /* Legacy button class, if present */
   {
-    display: none !important; /* Use important to ensure override */
+    display: none !important;
   }
 }
