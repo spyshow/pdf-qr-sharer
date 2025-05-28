@@ -35,8 +35,8 @@ function QRCodeDisplay({ qrCodeDataUrl, pdfUrl, fileName, tags }) {
 
   return (
     <Card title="Scan QR Code or Open PDF" style={{ marginTop: '20px' }}>
-      {/* Hidden component for printing */}
-      <div style={{ display: 'none' }}>
+      {/* Hidden component for printing, using off-screen technique */}
+      <div className="visually-hidden-for-print-ref">
         <PrintableContent 
           ref={printableAreaRef} 
           fileName={fileName} 
