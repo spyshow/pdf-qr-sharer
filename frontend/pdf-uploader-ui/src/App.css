@@ -148,6 +148,7 @@ body {
 }
 
 .visually-hidden-for-print-ref {
+  display: block !important; /* Added */
   position: absolute !important; /* Use !important to ensure override */
   left: -9999px !important;
   top: -9999px !important;
@@ -157,4 +158,5 @@ body {
   border: 0 !important; /* Ensure no border contributes to layout */
   padding: 0 !important; /* Ensure no padding contributes to layout */
   margin: 0 !important; /* Ensure no margin contributes to layout */
+  z-index: -1 !important; /* Added */
 }
