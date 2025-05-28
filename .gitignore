@@ -1,5 +1,4 @@
 node_modules
 backend\uploads
-backend\qrcodes.db
-backend/qrcodes.db
 backend\uploads
+backend/qrcodes.db
