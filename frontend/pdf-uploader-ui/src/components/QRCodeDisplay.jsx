@@ -1,14 +1,15 @@
-import React, { useRef } from 'react'; // Add useRef
-import { useReactToPrint } from 'react-to-print'; // Add this import
+import React, { useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
 import { Button, Card, Typography, Image, Space } from 'antd';
 import { PrinterOutlined } from '@ant-design/icons';
+import PrintableContent from './PrintableContent'; // Import the new component
 
-function QRCodeDisplay({ qrCodeDataUrl, pdfUrl, fileName, tags }) { // Removed handlePrintQrCode
+function QRCodeDisplay({ qrCodeDataUrl, pdfUrl, fileName, tags }) {
   if (!qrCodeDataUrl) {
     return null;
   }
 
-  const printableAreaRef = useRef();
+  const printableAreaRef = useRef(); // Ref for the PrintableContent component
 
   const handlePrint = useReactToPrint({
     content: () => printableAreaRef.current,
@@ -16,11 +17,23 @@ function QRCodeDisplay({ qrCodeDataUrl, pdfUrl, fileName, tags }) { // Removed h
 
   return (
     <Card title="Scan QR Code or Open PDF" style={{ marginTop: '20px' }}>
-      <div id="printable-area" ref={printableAreaRef}>
+      {/* Hidden component for printing */}
+      <div style={{ display: 'none' }}>
+        <PrintableContent 
+          ref={printableAreaRef} 
+          fileName={fileName} 
+          tags={tags} 
+          qrCodeDataUrl={qrCodeDataUrl} 
+        />
+      </div>
+
+      {/* Visible content for on-screen display */}
+      <div> 
         <h1>{fileName || "Name not available"}</h1>
         <h3>{tags || "Tags not available"}</h3>
-        {/* <Image width={200} src={qrCodeDataUrl} alt="QR Code" preview={false} /> */} {/* Temporarily commented out/removed */}
+        {qrCodeDataUrl && <Image width={200} src={qrCodeDataUrl} alt="QR Code" preview={false} />}
       </div>
+
       <Space direction="vertical" align="center" size="middle" style={{ width: '100%' }}>
         <Typography.Text>
           PDF Link: <Typography.Link href={pdfUrl} target="_blank" rel="noopener noreferrer">{pdfUrl}</Typography.Link>
