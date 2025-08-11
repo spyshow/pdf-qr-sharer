@@ -7,7 +7,7 @@ import PrintableContent from './PrintableContent'; // Import the new component
 function QRCodeDisplay({ qrCodeDataUrl, pdfUrl, fileName, tags }) {
   // 1. Call ALL hooks at the top level, unconditionally.
   const printableAreaRef = useRef();
-  console.log("QRCodeDisplay: printableAreaRef initialized", printableAreaRef); 
+  console.log("QRCodeDisplay: printableAreaRef initialized", printableAreaRef);
 
   const handlePrint = useReactToPrint({
     content: () => {
@@ -34,18 +34,32 @@ function QRCodeDisplay({ qrCodeDataUrl, pdfUrl, fileName, tags }) {
 
   return (
     <Card title="Scan QR Code or Open PDF" style={{ marginTop: '20px' }}>
-      {/* Hidden component for printing, using off-screen technique */}
-      <div className="visually-hidden-for-print-ref">
-        <PrintableContent 
-          ref={printableAreaRef} 
-          fileName={fileName} 
-          tags={tags} 
-          qrCodeDataUrl={qrCodeDataUrl} 
+      {/* Hidden component for printing, using aggressive inline styles */}
+      <div
+        style={{
+          position: 'absolute',
+          left: '-9999px',
+          top: '-9999px',
+          width: '1px',
+          height: '1px',
+          overflow: 'hidden',
+          border: '0', // Ensure no border
+          padding: '0', // Ensure no padding
+          margin: '0', // Ensure no margin
+          opacity: '0', // Make it transparent as well
+          zIndex: '-1' // Try to push it behind other elements
+        }}
+      >
+        <PrintableContent
+          ref={printableAreaRef}
+          fileName={fileName}
+          tags={tags}
+          qrCodeDataUrl={qrCodeDataUrl}
         />
       </div>
 
       {/* Visible content for on-screen display */}
-      <div> 
+      <div>
         <h1>{fileName || "Name not available"}</h1>
         <h3>{tags || "Tags not available"}</h3>
         {qrCodeDataUrl && <Image width={200} src={qrCodeDataUrl} alt="QR Code" preview={false} />}
