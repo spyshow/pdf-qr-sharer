@@ -51,7 +51,7 @@ function App() {
     formData.append("tags", tags);
 
     try {
-      const response = await fetch("http://192.168.0.48:3001/upload", {
+      const response = await fetch("http://192.168.0.2:3001/upload", {
         method: "POST",
         body: formData,
       });
