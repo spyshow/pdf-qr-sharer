@@ -118,7 +118,7 @@ body {
 @media print {
   /* Ensure a white background for the printed area if not default */
   #actual-printable-content {
-    background-color: #fff !important; 
+    background-color: #fff !important;
     /* Ensure any other necessary base styles for the printable block are here */
   }
 
