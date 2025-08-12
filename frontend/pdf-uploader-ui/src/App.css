@@ -116,47 +116,16 @@ body {
 }
 
 @media print {
-  /* Ensure a white background for the printed area if not default */
-  #actual-printable-content {
-    background-color: #fff !important;
-    /* Ensure any other necessary base styles for the printable block are here */
+  body * {
+    visibility: hidden;
   }
-
-  #actual-printable-content h1 {
-    text-align: center;
-    font-size: 20pt;
-    color: #000 !important; /* Ensure black text for print */
-    margin-top: 0; /* Or specific print margin */
-    margin-bottom: 10px;
+  .printable-area, .printable-area * {
+    visibility: visible;
   }
-
-  #actual-printable-content h3 {
-    text-align: center;
-    font-size: 14pt;
-    color: #000 !important; /* Ensure black text for print */
-    margin-bottom: 15px;
+  .printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
   }
-
-  #actual-printable-content img { /* QR Code */
-    max-width: 80mm; /* Or desired print size */
-    display: block;
-    margin: 20px auto;
-    border: 1px solid #000; /* Optional: border for the image */
-  }
-  
-  /* Add any other styles specifically needed for the content of #actual-printable-content when printed */
-}
-
-.visually-hidden-for-print-ref {
-  display: block !important; /* Added */
-  position: absolute !important; /* Use !important to ensure override */
-  left: -9999px !important;
-  top: -9999px !important;
-  width: 1px !important;
-  height: 1px !important;
-  overflow: hidden !important;
-  border: 0 !important; /* Ensure no border contributes to layout */
-  padding: 0 !important; /* Ensure no padding contributes to layout */
-  margin: 0 !important; /* Ensure no margin contributes to layout */
-  z-index: -1 !important; /* Added */
 }

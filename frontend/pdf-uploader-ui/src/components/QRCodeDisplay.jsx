@@ -2,70 +2,29 @@ import React, { useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { Button, Card, Typography, Image, Space } from 'antd';
 import { PrinterOutlined } from '@ant-design/icons';
-import PrintableContent from './PrintableContent'; // Import the new component
 
 function QRCodeDisplay({ qrCodeDataUrl, pdfUrl, fileName, tags }) {
-  // 1. Call ALL hooks at the top level, unconditionally.
   const printableAreaRef = useRef();
-  console.log("QRCodeDisplay: printableAreaRef initialized", printableAreaRef);
 
   const handlePrint = useReactToPrint({
-    content: () => {
-      console.log("useReactToPrint content() called. printableAreaRef.current:", printableAreaRef.current);
-      return printableAreaRef.current;
-    },
-    onBeforeGetContent: () => {
-      console.log("useReactToPrint onBeforeGetContent() called. printableAreaRef.current:", printableAreaRef.current);
-      return Promise.resolve();
-    },
-    onPrintError: (errorLocation, error) => {
-      console.error("useReactToPrint onPrintError:", errorLocation, error);
-      console.error("useReactToPrint onPrintError - printableAreaRef.current at time of error:", printableAreaRef.current);
-    }
+    content: () => printableAreaRef.current,
+    documentTitle: fileName || 'QR Code',
+    removeAfterPrint: true,
   });
 
-  // 2. The early conditional return `if (!qrCodeDataUrl) { return null; }` has been removed.
-  // App.jsx is expected to handle conditional rendering of QRCodeDisplay.
-  // If QRCodeDisplay is rendered, qrCodeDataUrl should be present.
-  // If not, PrintableContent and the visible Image should handle empty qrCodeDataUrl prop gracefully.
-
-  // Log right before the return statement of QRCodeDisplay
-  console.log("QRCodeDisplay: printableAreaRef before return statement. Current value:", printableAreaRef.current);
+  if (!qrCodeDataUrl) {
+    return null;
+  }
 
   return (
-    <Card title="Scan QR Code or Open PDF" style={{ marginTop: '20px' }}>
-      {/* Hidden component for printing, using aggressive inline styles */}
-      <div
-        style={{
-          position: 'absolute',
-          left: '-9999px',
-          top: '-9999px',
-          width: '1px',
-          height: '1px',
-          overflow: 'hidden',
-          border: '0', // Ensure no border
-          padding: '0', // Ensure no padding
-          margin: '0', // Ensure no margin
-          opacity: '0', // Make it transparent as well
-          zIndex: '-1' // Try to push it behind other elements
-        }}
-      >
-        <PrintableContent
-          ref={printableAreaRef}
-          fileName={fileName}
-          tags={tags}
-          qrCodeDataUrl={qrCodeDataUrl}
-        />
-      </div>
-
-      {/* Visible content for on-screen display */}
-      <div>
+    <Card title="Scan QR Code or Open PDF" style={{ marginTop: '20px' }} className="printable-card">
+      <div ref={printableAreaRef} className="printable-area">
         <h1>{fileName || "Name not available"}</h1>
         <h3>{tags || "Tags not available"}</h3>
         {qrCodeDataUrl && <Image width={200} src={qrCodeDataUrl} alt="QR Code" preview={false} />}
       </div>
 
-      <Space direction="vertical" align="center" size="middle" style={{ width: '100%' }}>
+      <Space direction="vertical" align="center" size="middle" style={{ width: '100%', marginTop: '20px' }} className="non-printable">
         <Typography.Text>
           PDF Link: <Typography.Link href={pdfUrl} target="_blank" rel="noopener noreferrer">{pdfUrl}</Typography.Link>
         </Typography.Text>
